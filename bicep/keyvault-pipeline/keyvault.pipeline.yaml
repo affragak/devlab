@@ -1,0 +1,148 @@
+trigger:
+  branches:
+    include:
+      - main
+  paths:
+    include:
+      - infrastructure/keyvault/**
+
+pool:
+  vmImage: "ubuntu-latest"
+
+variables:
+  - group: azure-deployment-variables
+  - name: bicepFilePath
+    value: "infrastructure/keyvault/keyvault.bicep"
+  - name: parametersFilePath
+    value: "infrastructure/keyvault/keyvault.parameters.json"
+  - name: azureServiceConnection
+    value: "azure-service-connection"
+
+stages:
+  - stage: Validate
+    displayName: "Validate Bicep Templates"
+    jobs:
+      - job: ValidateBicep
+        displayName: "Validate Bicep templates"
+        steps:
+          - task: AzureCLI@2
+            displayName: "Validate Key Vault Bicep template"
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                az deployment group validate \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(bicepFilePath) \
+                  --parameters $(parametersFilePath) \
+                  --parameters keyVaultName=$(keyVaultName) \
+                  --parameters administratorObjectIds=$(administratorObjectIds) \
+                  --parameters accessPolicies='$(accessPolicies)'
+
+  - stage: Dev
+    displayName: "Deploy to Development"
+    dependsOn: Validate
+    condition: succeeded()
+    variables:
+      - name: Environment
+        value: "dev"
+      - name: resourceGroupName
+        value: "rg-myproject-dev-001"
+
+    jobs:
+      - job: DeployKeyVault
+        displayName: "Deploy Key Vault to Dev"
+        steps:
+          - task: AzureCLI@2
+            displayName: "Deploy Key Vault Bicep template"
+            inputs:
+              azureSubscription: $(azureServiceConnection)
+              scriptType: "bash"
+              scriptLocation: "inlineScript"
+              inlineScript: |
+                # Ensure resource group exists
+                az group create --name $(resourceGroupName) --location $(location) --tags Environment=$(Environment)
+
+                # Deploy Key Vault using Bicep
+                az deployment group create \
+                  --resource-group $(resourceGroupName) \
+                  --template-file $(bicepFilePath) \
+                  --parameters $(parametersFilePath) \
+                  --parameters keyVaultName=$(keyVaultName) \
+                  --parameters administratorObjectIds='$(administratorObjectIds)' \
+                  --parameters accessPolicies='$(accessPolicies)'
+
+  - stage: Test
+    displayName: "Deploy to Test"
+    dependsOn: Dev
+    condition: succeeded()
+    variables:
+      - name: Environment
+        value: "test"
+      - name: resourceGroupName
+        value: "rg-myproject-test-001"
+
+    jobs:
+      - deployment: DeployKeyVault
+        displayName: "Deploy Key Vault to Test"
+        environment: "test"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: "Deploy Key Vault Bicep template"
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    scriptType: "bash"
+                    scriptLocation: "inlineScript"
+                    inlineScript: |
+                      # Ensure resource group exists
+                      az group create --name $(resourceGroupName) --location $(location) --tags Environment=$(Environment)
+
+                      # Deploy Key Vault using Bicep
+                      az deployment group create \
+                        --resource-group $(resourceGroupName) \
+                        --template-file $(bicepFilePath) \
+                        --parameters $(parametersFilePath) \
+                        --parameters keyVaultName=$(keyVaultName) \
+                        --parameters administratorObjectIds='$(administratorObjectIds)' \
+                        --parameters accessPolicies='$(accessPolicies)'
+
+  - stage: Prod
+    displayName: "Deploy to Production"
+    dependsOn: Test
+    condition: succeeded()
+    variables:
+      - name: Environment
+        value: "prod"
+      - name: resourceGroupName
+        value: "rg-myproject-prod-001"
+
+    jobs:
+      - deployment: DeployKeyVault
+        displayName: "Deploy Key Vault to Production"
+        environment: "production"
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - task: AzureCLI@2
+                  displayName: "Deploy Key Vault Bicep template"
+                  inputs:
+                    azureSubscription: $(azureServiceConnection)
+                    scriptType: "bash"
+                    scriptLocation: "inlineScript"
+                    inlineScript: |
+                      # Ensure resource group exists
+                      az group create --name $(resourceGroupName) --location $(location) --tags Environment=$(Environment)
+
+                      # Deploy Key Vault using Bicep
+                      az deployment group create \
+                        --resource-group $(resourceGroupName) \
+                        --template-file $(bicepFilePath) \
+                        --parameters $(parametersFilePath) \
+                        --parameters keyVaultName=$(keyVaultName) \
+                        --parameters administratorObjectIds='$(administratorObjectIds)' \
+                        --parameters accessPolicies='$(accessPolicies)'
