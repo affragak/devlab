@@ -14,7 +14,7 @@ variables:
   - name: bicepFilePath
     value: "infrastructure/keyvault/keyvault.bicep"
   - name: parametersFilePath
-    value: "infrastructure/keyvault/keyvault.parameters.json"
+    value: "infrastructure/keyvault/keyvault.parameters.bicepparam"
   - name: azureServiceConnection
     value: "azure-service-connection"
 
