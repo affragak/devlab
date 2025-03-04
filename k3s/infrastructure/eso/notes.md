@@ -153,5 +153,7 @@ spec:
 k get externalsecrets.external-secrets.io
 NAME            STORETYPE            STORE           REFRESH INTERVAL   STATUS         READY
 test-db-creds   ClusterSecretStore   vault-backend   15s                SecretSynced   True
-
 ```
+
+References:
+https://github.com/digitalocean/Kubernetes-Starter-Kit-Developers/blob/main/06-kubernetes-secrets/external-secrets-operator.md
