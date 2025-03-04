@@ -1,4 +1,4 @@
-# External Secret Operator
+# External Secret Operator with Vault
 
 ```text
 helm install external-secrets external-secrets/external-secrets \
