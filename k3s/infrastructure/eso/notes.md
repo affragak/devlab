@@ -54,7 +54,7 @@ token_policies         ["admin" "default"]
 identity_policies      []
 policies               ["admin" "default"]
 token_meta_username    <username>
-```
+```text
 ❯ vault status
 Key             Value
 ---             -----
