@@ -1,5 +1,10 @@
 # External Secret Operator with Vault
 
+
+```text
+helm repo add external-secrets https://charts.external-secrets.io
+```
+
 ```text
 helm install external-secrets external-secrets/external-secrets \
     --namespace=external-secrets \
