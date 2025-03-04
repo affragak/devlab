@@ -78,7 +78,6 @@ HA Enabled      false
 vault secrets enable -path=secret/ kv
 ```
 ```text
-```text
 vault kv put -mount=secret db-creds username=<username> password=<password>
 ==== Secret Path ====
 secret/data/db-creds
